@@ -1,6 +1,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Cinemachine;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -10,16 +12,32 @@ public class PlayerMovement : MonoBehaviour
 
     //KeyCode sprint;
 
+    [Header("References")]
+    [SerializeField] CinemachineCamera playerCamera;
+    CapsuleCollider collision;
+
     [Header("Movement")]
-    [SerializeField] float walkSpeed;
-    [SerializeField] float sprintSpeed;
-    float moveSpeed;
+    public float walkSpeed;
+    public float sprintSpeed;
+    public float crouchSpeed;
+    public float moveSpeed;
     [SerializeField] float drag;
+    bool sprinting;
+
+    [Header("Crouching")]
+    [SerializeField] float heightSpeed;
+    [SerializeField] float crouchY;
+    bool crouching;
 
     [Header("Ground Check")]
     [SerializeField] float playerHeight;
     [SerializeField] LayerMask ground;
-    bool grounded;
+    public bool grounded;
+
+    [Header("Camera Effects")]
+    [SerializeField] float defaultFOV;
+    [SerializeField] float sprintFOV;
+    [SerializeField] float fovSmoothing;
 
     Rigidbody rb;
 
@@ -32,6 +50,7 @@ public class PlayerMovement : MonoBehaviour
     {
         moveSpeed = walkSpeed;
 
+        collision = GetComponentInChildren<CapsuleCollider>();
         rb = GetComponent<Rigidbody>();
         rb.freezeRotation = true;
     }
@@ -41,8 +60,14 @@ public class PlayerMovement : MonoBehaviour
     {
         GetInput();
         CheckGrounded();
+        CheckCrouch();
         CheckSprint();
-        SpeedControl();
+        SetMovementState();
+
+        if (rb.linearVelocity != Vector3.zero)
+        {
+            SpeedControl();
+        }
 
         Debug.Log("Speed: " + moveSpeed);
     }
@@ -52,6 +77,7 @@ public class PlayerMovement : MonoBehaviour
         if (canMove)
         {
             MovePlayer();
+            MovementEffects();
         }
     }
 
@@ -84,16 +110,61 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
+    void CheckCrouch()
+    {
+        if (crouching && Physics.Raycast(transform.position, Vector3.up, (playerHeight * 0.5f) + 0.1f, ground))
+        {
+            return;
+        }
+
+        switch (Input.GetKey(KeyCode.LeftControl))
+        {
+            case true:
+                crouching = true;
+                break;
+            case false:
+                crouching = false;
+                break;
+        }
+    }
+
     void CheckSprint()
     {
+        if (rb.linearVelocity == Vector3.zero || crouching)
+        {
+            sprinting = false;
+            return;
+        }
+
         switch (Input.GetKey(KeyCode.LeftShift))
         {
             case true:
-                moveSpeed = sprintSpeed;
+                sprinting = true;
                 break;
             case false:
-                moveSpeed = walkSpeed;
+                sprinting = false;
                 break;
+        }
+    }
+
+    void SetMovementState()
+    {
+        if (crouching)
+        {
+            playerHeight = 1.5f;
+            moveSpeed = crouchSpeed;
+        }
+
+        else if (sprinting)
+        {
+            playerHeight = 1.9f;
+            moveSpeed = sprintSpeed;
+        }
+
+        else
+        {
+            playerHeight = 2;
+            moveSpeed = walkSpeed;
         }
     }
 
@@ -106,6 +177,24 @@ public class PlayerMovement : MonoBehaviour
         {
             Vector3 limitedVelocity = flatVelocity.normalized * moveSpeed;
             rb.linearVelocity = new Vector3(limitedVelocity.x, rb.linearVelocity.y, limitedVelocity.z);
+        }
+    }
+
+    void MovementEffects()
+    {
+        Vector3 camPos = playerCamera.transform.localPosition;
+
+        playerCamera.transform.localPosition = Vector3.Lerp(camPos, new Vector3(camPos.x, playerHeight - 1.5f, camPos.z), heightSpeed * Time.deltaTime);
+        collision.height = Mathf.Lerp(collision.height, playerHeight, heightSpeed * Time.deltaTime);
+
+        switch (sprinting)
+        {
+            case true:
+                playerCamera.Lens.FieldOfView = Mathf.Lerp(playerCamera.Lens.FieldOfView, sprintFOV, fovSmoothing * Time.deltaTime);
+                break;
+            case false:
+                playerCamera.Lens.FieldOfView = Mathf.Lerp(playerCamera.Lens.FieldOfView, defaultFOV, fovSmoothing * Time.deltaTime);
+                break;
         }
     }
 

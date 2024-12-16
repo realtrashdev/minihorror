@@ -13,7 +13,8 @@ public class CameraMovement : MonoBehaviour
     [Header("Movement")]
     [SerializeField] float xSens;
     [SerializeField] float ySens;
-    [SerializeField] float lookSmoothing;
+    //higher number = more responsive
+    [SerializeField] float lookSnappiness;
 
     float xRotation;
     float yRotation;
@@ -51,7 +52,7 @@ public class CameraMovement : MonoBehaviour
         {
             case true:
                 //lerp camera movement
-                transform.rotation = Quaternion.Lerp(transform.rotation, rotation, lookSmoothing * Time.deltaTime);
+                transform.rotation = Quaternion.Lerp(transform.rotation, rotation, lookSnappiness * Time.deltaTime);
                 break;
             case false:
                 //precise camera movement

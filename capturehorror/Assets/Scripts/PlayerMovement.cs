@@ -10,8 +10,6 @@ public class PlayerMovement : MonoBehaviour
 {
     public bool canMove;
 
-    //KeyCode sprint;
-
     [Header("References")]
     [SerializeField] CinemachineCamera playerCamera;
     [SerializeField] PhotoCamera photoCamera;

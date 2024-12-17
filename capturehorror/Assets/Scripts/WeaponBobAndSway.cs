@@ -7,12 +7,14 @@ public class WeaponBobAndSway : MonoBehaviour
     [Header("External References")]
     [SerializeField] PlayerMovement mover;
     [SerializeField] Rigidbody rb;
+    ItemManager itemManager;
 
     [Header("Settings")]
     public bool sway = true;
     public bool swayRotation = true;
     public bool bobOffset = true;
     public bool bobSway = true;
+    [SerializeField] float swaySpeed;
 
     [Header("Multiplier Presets")]
     [SerializeField] Vector3 standMultiplier;
@@ -24,12 +26,17 @@ public class WeaponBobAndSway : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        
+        itemManager = GetComponent<ItemManager>();
     }
 
     // Update is called once per frame
     void Update()
     {
+        if (itemManager.switching)
+        {
+            return;
+        }
+
         GetMultiplier();
         GetInput();
 
@@ -133,7 +140,7 @@ public class WeaponBobAndSway : MonoBehaviour
 
     void BobOffset()
     {
-        speedCurve += Time.deltaTime * ((mover.grounded ? rb.linearVelocity.magnitude : 1f) + 0.05f);
+        speedCurve += Time.deltaTime * ((mover.grounded ? rb.linearVelocity.magnitude : 1f) + swaySpeed);
 
         if (!bobOffset) { bobPosition = Vector3.zero; return; }
 

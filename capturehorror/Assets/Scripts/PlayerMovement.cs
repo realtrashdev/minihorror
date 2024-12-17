@@ -14,20 +14,24 @@ public class PlayerMovement : MonoBehaviour
 
     [Header("References")]
     [SerializeField] CinemachineCamera playerCamera;
+    [SerializeField] PhotoCamera photoCamera;
     CapsuleCollider collision;
 
     [Header("Movement")]
     public float walkSpeed;
     public float sprintSpeed;
     public float crouchSpeed;
+    public float slowedSpeed;
     public float moveSpeed;
     [SerializeField] float drag;
-    bool sprinting;
+    [HideInInspector] public bool slowed = false;
+    [HideInInspector] public bool sprinting;
 
     [Header("Crouching")]
     [SerializeField] float heightSpeed;
     [SerializeField] float crouchY;
-    bool crouching;
+    [HideInInspector] public bool crouching;
+    [SerializeField] bool toggleCrouch;
 
     [Header("Ground Check")]
     [SerializeField] float playerHeight;
@@ -53,6 +57,8 @@ public class PlayerMovement : MonoBehaviour
         collision = GetComponentInChildren<CapsuleCollider>();
         rb = GetComponent<Rigidbody>();
         rb.freezeRotation = true;
+
+        GetSettings();
     }
 
     // Update is called once per frame
@@ -60,6 +66,7 @@ public class PlayerMovement : MonoBehaviour
     {
         GetInput();
         CheckGrounded();
+        CheckSlowed();
         CheckCrouch();
         CheckSprint();
         SetMovementState();
@@ -68,8 +75,6 @@ public class PlayerMovement : MonoBehaviour
         {
             SpeedControl();
         }
-
-        Debug.Log("Speed: " + moveSpeed);
     }
 
     void FixedUpdate()
@@ -79,6 +84,11 @@ public class PlayerMovement : MonoBehaviour
             MovePlayer();
             MovementEffects();
         }
+    }
+
+    void GetSettings()
+    {
+        //toggleCrouch = PlayerPrefs.GetInt("settingToggleCrouch", 0) != 0;
     }
 
     void GetInput()
@@ -112,11 +122,30 @@ public class PlayerMovement : MonoBehaviour
 
     void CheckCrouch()
     {
-        if (crouching && Physics.Raycast(transform.position, Vector3.up, (playerHeight * 0.5f) + 0.1f, ground))
+        //if something is blocking uncrouch, end function
+        if (crouching && Physics.BoxCast(transform.position, transform.localScale * 0.5f, Vector3.up, Quaternion.identity, (playerHeight - 1) + 0.1f))
         {
             return;
         }
 
+        //toggle crouch mode
+        //should try and add a feature for "scheduling" an uncrouch the next time it's possible to
+        if (toggleCrouch)
+        {
+            if (Input.GetKeyDown(KeyCode.LeftControl))
+            {
+                crouching = !crouching;
+            }
+
+            if (Input.GetKeyDown(KeyCode.LeftShift) && rb.linearVelocity != Vector3.zero)
+            {
+                crouching = false;
+            }
+
+            return;
+        }
+
+        //hold crouch mode
         switch (Input.GetKey(KeyCode.LeftControl))
         {
             case true:
@@ -128,9 +157,22 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
+    void CheckSlowed()
+    {
+        if (photoCamera != null && photoCamera.aiming)
+        {
+            slowed = true;
+        }
+
+        else
+        {
+            slowed = false;
+        }
+    }
+
     void CheckSprint()
     {
-        if (rb.linearVelocity == Vector3.zero || crouching)
+        if (rb.linearVelocity == Vector3.zero || crouching || slowed)
         {
             sprinting = false;
             return;
@@ -153,11 +195,16 @@ public class PlayerMovement : MonoBehaviour
         {
             playerHeight = 1.5f;
             moveSpeed = crouchSpeed;
+
+            if (slowed)
+            {
+                moveSpeed -= slowedSpeed / 2;
+            }
         }
 
         else if (sprinting)
         {
-            playerHeight = 1.9f;
+            playerHeight = 2;
             moveSpeed = sprintSpeed;
         }
 
@@ -165,6 +212,11 @@ public class PlayerMovement : MonoBehaviour
         {
             playerHeight = 2;
             moveSpeed = walkSpeed;
+
+            if (slowed)
+            {
+                moveSpeed -= slowedSpeed;
+            }
         }
     }
 
@@ -197,13 +249,4 @@ public class PlayerMovement : MonoBehaviour
                 break;
         }
     }
-
-
-
-    /*void GetKeybinds()
-    {
-        string keyName;
-        keyName = PlayerPrefs.GetString("keybindSprint", "Shift");
-        sprint = (KeyCode)Enum.Parse(typeof(KeyCode), keyName);
-    }*/
 }

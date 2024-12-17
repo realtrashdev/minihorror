@@ -160,8 +160,11 @@ MonoBehaviour:
   playerCamera: {fileID: 0}
   walkSpeed: 3
   sprintSpeed: 5
+  crouchSpeed: 1.5
   moveSpeed: 0
   drag: 6
+  heightSpeed: 6
+  crouchY: 1.5
   playerHeight: 2
   ground:
     serializedVersion: 2

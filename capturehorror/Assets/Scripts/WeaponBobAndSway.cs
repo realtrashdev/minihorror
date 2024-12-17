@@ -14,6 +14,13 @@ public class WeaponBobAndSway : MonoBehaviour
     public bool bobOffset = true;
     public bool bobSway = true;
 
+    [Header("Multiplier Presets")]
+    [SerializeField] Vector3 standMultiplier;
+    [SerializeField] Vector3 walkMultiplier;
+    [SerializeField] Vector3 sprintMultiplier;
+    [SerializeField] Vector3 crouchMultiplier;
+
+
     // Start is called before the first frame update
     void Start()
     {
@@ -23,21 +30,7 @@ public class WeaponBobAndSway : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (rb.linearVelocity == Vector3.zero)
-        {
-            multiplier = new Vector3(0.2f, 0.1f, 0);
-        }
-
-        else if (mover.moveSpeed == mover.walkSpeed && rb.linearVelocity != Vector3.zero)
-        {
-            multiplier = new Vector3(1, 0.5f, 0);
-        }
-
-        else
-        {
-            multiplier = new Vector3(2, 1, 0);
-        }
-
+        GetMultiplier();
         GetInput();
 
         Sway();
@@ -46,6 +39,29 @@ public class WeaponBobAndSway : MonoBehaviour
         BobRotation();
 
         CompositePositionRotation();
+    }
+
+    void GetMultiplier()
+    {
+        if (rb.linearVelocity == Vector3.zero)
+        {
+            multiplier = standMultiplier;
+        }
+
+        else if (mover.sprinting)
+        {
+            multiplier = sprintMultiplier;
+        }
+
+        else if (mover.crouching || mover.slowed)
+        {
+            multiplier = crouchMultiplier;
+        }
+
+        else
+        {
+            multiplier = walkMultiplier;
+        }
     }
 
     //store inputs
@@ -117,7 +133,7 @@ public class WeaponBobAndSway : MonoBehaviour
 
     void BobOffset()
     {
-        speedCurve += Time.deltaTime * (mover.grounded ? rb.linearVelocity.magnitude : 1f) + 0.01f;
+        speedCurve += Time.deltaTime * ((mover.grounded ? rb.linearVelocity.magnitude : 1f) + 0.05f);
 
         if (!bobOffset) { bobPosition = Vector3.zero; return; }
 

@@ -11,6 +11,7 @@ public class PhotoCamera : MonoBehaviour
     [SerializeField] Light flash;
     [SerializeField] SliderScript batterySlider;
     [SerializeField] PlayerMovement playerMovement;
+    ItemManager itemManager;
 
     [Header("Stats")]
     public int battery;
@@ -40,6 +41,7 @@ public class PhotoCamera : MonoBehaviour
     void Start()
     {
         zoom = screen.fieldOfView;
+        itemManager = GetComponentInParent<ItemManager>();
     }
 
     void Update()
@@ -47,6 +49,12 @@ public class PhotoCamera : MonoBehaviour
         Timer();
         GetInput();
         CheckForWall();
+
+        if (itemManager.switching)
+        {
+            aiming = false;
+        }
+
         Lerp();
     }
 
@@ -83,14 +91,24 @@ public class PhotoCamera : MonoBehaviour
     {
         Camera cam = Camera.main;
 
-        if (Physics.Raycast(cam.transform.position, cam.transform.forward, 1.4f))
+        if (Physics.Raycast(cam.transform.position, cam.transform.forward, out RaycastHit hitInfo, 1.4f))
         {
+            if (hitInfo.collider.isTrigger)
+            {
+                return;
+            }
+
             hitWall = true;
             aiming = false;
         }
 
         else if (Physics.Raycast(playerMovement.gameObject.transform.position, playerMovement.gameObject.transform.forward, 1.4f))
         {
+            if (hitInfo.collider.isTrigger)
+            {
+                return;
+            }
+
             hitWall = true;
             aiming = false;
         }
@@ -158,6 +176,7 @@ public class PhotoCamera : MonoBehaviour
         flash.intensity = flashIntensity;
         battery -= 1;
         batterySlider.UpdateValue(battery);
+        CheckForInteraction();
         cooldown = flashCooldown;
     }
 
@@ -178,6 +197,17 @@ public class PhotoCamera : MonoBehaviour
         else if (zoom > minZoom)
         {
             zoom = minZoom;
+        }
+    }
+
+    void CheckForInteraction()
+    {
+        if (Physics.Raycast(transform.position, transform.forward, out RaycastHit hitInfo, 20f))
+        {
+            if (hitInfo.collider.gameObject.GetComponent<CameraInteractible>())
+            {
+                hitInfo.collider.gameObject.GetComponent<CameraInteractible>().CameraInteract();
+            }
         }
     }
 }

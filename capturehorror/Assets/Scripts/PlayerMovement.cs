@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Cinemachine;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -12,6 +11,7 @@ public class PlayerMovement : MonoBehaviour
 
     [Header("References")]
     [SerializeField] CinemachineCamera playerCamera;
+    [SerializeField] ItemManager itemManager;
     [SerializeField] PhotoCamera photoCamera;
     CapsuleCollider collision;
 
@@ -22,8 +22,8 @@ public class PlayerMovement : MonoBehaviour
     public float slowedSpeed;
     public float moveSpeed;
     [SerializeField] float drag;
-    [HideInInspector] public bool slowed = false;
-    [HideInInspector] public bool sprinting;
+    public bool slowed;
+    public bool sprinting;
 
     [Header("Crouching")]
     [SerializeField] float heightSpeed;
@@ -52,8 +52,7 @@ public class PlayerMovement : MonoBehaviour
     {
         moveSpeed = walkSpeed;
 
-        collision = GetComponentInChildren<CapsuleCollider>();
-        rb = GetComponent<Rigidbody>();
+        GetReferences();
         rb.freezeRotation = true;
 
         GetSettings();
@@ -87,6 +86,12 @@ public class PlayerMovement : MonoBehaviour
     void GetSettings()
     {
         //toggleCrouch = PlayerPrefs.GetInt("settingToggleCrouch", 0) != 0;
+    }
+
+    void GetReferences()
+    {
+        collision = GetComponentInChildren<CapsuleCollider>();
+        rb = GetComponent<Rigidbody>();
     }
 
     void GetInput()

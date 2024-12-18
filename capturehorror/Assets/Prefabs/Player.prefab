@@ -158,13 +158,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   canMove: 1
   playerCamera: {fileID: 0}
+  photoCamera: {fileID: 0}
   walkSpeed: 3
   sprintSpeed: 5
   crouchSpeed: 1.5
+  slowedSpeed: 1
   moveSpeed: 0
   drag: 6
-  heightSpeed: 6
+  slowed: 0
+  sprinting: 0
+  heightSpeed: 2
   crouchY: 1.5
+  crouching: 0
+  toggleCrouch: 1
   playerHeight: 2
   ground:
     serializedVersion: 2
